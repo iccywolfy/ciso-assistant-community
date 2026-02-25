@@ -1,9 +1,11 @@
+from django.http import FileResponse
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from ciso_assistant.settings import CISO_ASSISTANT_URL
 from rest_framework.decorators import action
+from core.permissions import IsAdministrator
 
 from core.serializers import SerializerFactory
 from iam.sso.models import SSOSettings
@@ -212,6 +214,44 @@ class GeneralSettingsViewSet(viewsets.ModelViewSet):
             ),
         }
         return Response(interface_settings)
+
+    @action(detail=False, methods=["get", "post", "delete"], url_path="logo", url_name="logo")
+    def logo(self, request):
+        instance = GlobalSettings.objects.filter(name="general").first()
+
+        if request.method == "GET":
+            if instance and instance.logo:
+                return FileResponse(instance.logo.open("rb"))
+            return Response(status=404)
+
+        if not IsAdministrator().has_permission(request, self):
+            return Response({"detail": "Permission denied."}, status=403)
+
+        if request.method == "POST":
+            file = request.FILES.get("logo")
+            if not file:
+                return Response({"detail": "No file provided."}, status=400)
+            if file.size > 2 * 1024 * 1024:
+                return Response({"detail": "File too large. Maximum size is 2MB."}, status=400)
+            allowed_types = ["image/png", "image/jpeg", "image/svg+xml", "image/webp"]
+            if file.content_type not in allowed_types:
+                return Response(
+                    {"detail": "Invalid file type. Allowed: PNG, JPEG, SVG, WebP."},
+                    status=400,
+                )
+            if instance and instance.logo:
+                instance.logo.delete(save=False)
+            instance, _ = GlobalSettings.objects.get_or_create(name="general")
+            instance.logo = file
+            instance.save(update_fields=["logo"])
+            return Response({"detail": "Logo updated successfully."}, status=200)
+
+        if request.method == "DELETE":
+            if instance and instance.logo:
+                instance.logo.delete(save=False)
+                instance.logo = None
+                instance.save(update_fields=["logo"])
+            return Response(status=204)
 
 
 @api_view(["GET"])

@@ -25,5 +25,13 @@ class GlobalSettings(AbstractBaseModel, FolderMixin):
     # Value of the setting.
     value = models.JSONField(default=dict)
 
+    # Custom logo (used by 'general' settings only)
+    logo = models.FileField(
+        upload_to='logos/',
+        null=True,
+        blank=True,
+        verbose_name='Custom Logo',
+    )
+
     def __str__(self):
         return self.name

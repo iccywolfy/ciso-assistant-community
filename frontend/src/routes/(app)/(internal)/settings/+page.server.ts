@@ -251,6 +251,34 @@ export const actions: Actions = {
 
 		return { form };
 	},
+	uploadLogo: async (event) => {
+		const formData = await event.request.formData();
+		if (!formData.get('logo')) {
+			return fail(400, { error: 'No file provided' });
+		}
+		const response = await event.fetch(`${BASE_API_URL}/settings/general/logo/`, {
+			method: 'POST',
+			body: formData
+		});
+		if (!response.ok) {
+			const data = await response.json().catch(() => ({}));
+			return fail(response.status, { error: (data as any).detail ?? 'Upload failed' });
+		}
+		setFlash({ type: 'success', message: 'Logo atualizado com sucesso' }, event);
+		return {};
+	},
+
+	deleteLogo: async (event) => {
+		const response = await event.fetch(`${BASE_API_URL}/settings/general/logo/`, {
+			method: 'DELETE'
+		});
+		if (!response.ok && response.status !== 204) {
+			return fail(response.status, { error: 'Delete failed' });
+		}
+		setFlash({ type: 'success', message: 'Logo restaurado para o padrão' }, event);
+		return {};
+	},
+
 	deleteWebhookEndpoint: async (event) => {
 		const formData = await event.request.formData();
 		const schema = z.object({ id: z.string() });
