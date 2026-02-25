@@ -7,7 +7,8 @@ services:
     environment:
       - ALLOWED_HOSTS=backend,localhost
       - CISO_ASSISTANT_URL=https://localhost:8443
-      - DJANGO_DEBUG=True
+      - DJANGO_DEBUG=False
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
       - AUTH_TOKEN_TTL=7200
 
     volumes:
@@ -31,6 +32,7 @@ services:
       - ALLOWED_HOSTS=backend,localhost
       - CISO_ASSISTANT_URL=https://localhost:8443
       - DJANGO_DEBUG=False
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
       - AUTH_TOKEN_TTL=7200
 
     volumes:
@@ -68,9 +70,4 @@ services:
       - 8443:8443
     volumes:
       - ./caddy_data:/data
-    command: |
-      sh -c 'echo $$CISO_ASSISTANT_URL "{
-      reverse_proxy /api/* backend:8000
-      reverse_proxy /* frontend:3000
-      tls internal
-      }" > Caddyfile && caddy run'
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro

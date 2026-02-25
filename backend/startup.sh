@@ -4,12 +4,15 @@ if [ ! -n "$DJANGO_SETTINGS_MODULE" ]; then
   export DJANGO_SETTINGS_MODULE=ciso_assistant.settings
 fi
 if [ ! -n "$DJANGO_SECRET_KEY" ]; then
+  echo "WARNING: DJANGO_SECRET_KEY not set via environment. Falling back to file-based key (not recommended for production)."
   if [ ! -f db/django_secret_key ]; then
-    cat /proc/sys/kernel/random/uuid >db/django_secret_key
-    echo "generating initial Django secret key"
+    python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())" >db/django_secret_key
+    echo "INFO: Generated new Django secret key and saved to db/django_secret_key."
   fi
   export DJANGO_SECRET_KEY=$(<db/django_secret_key)
-  echo "Django secret key read from file"
+  echo "INFO: Django secret key loaded from file."
+else
+  echo "INFO: Using DJANGO_SECRET_KEY from environment variable."
 fi
 while ! python manage.py showmigrations iam >/dev/null; do
   echo "database not ready; waiting"

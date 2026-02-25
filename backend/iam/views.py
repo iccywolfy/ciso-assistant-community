@@ -3,6 +3,7 @@ from datetime import timedelta
 
 import structlog
 from allauth.account.models import EmailAddress
+from django_ratelimit.decorators import ratelimit
 from django.contrib.auth import get_user_model, login, logout
 from django.db import models
 from django.db.models import Q, Exists, OuterRef
@@ -44,6 +45,7 @@ logger = structlog.get_logger(__name__)
 User = get_user_model()
 
 
+@method_decorator(ratelimit(key="ip", rate="5/m", method="POST", block=True), name="post")
 class LoginView(KnoxLoginView):
     permission_classes = (permissions.AllowAny,)
     serializer_class = LoginSerializer
@@ -273,6 +275,7 @@ class SessionTokenView(views.APIView):
         return Response({"token": session_token})
 
 
+@method_decorator(ratelimit(key="ip", rate="5/m", method="POST", block=True), name="post")
 class PasswordResetView(views.APIView):
     permission_classes = [permissions.AllowAny]
 

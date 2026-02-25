@@ -1,4 +1,4 @@
-FROM node:24-slim AS builder
+FROM node:22-slim AS builder
 ENV NODE_OPTIONS="--max-old-space-size=10240"
 WORKDIR /app
 
@@ -11,7 +11,7 @@ RUN pnpm install --frozen-lockfile
 RUN pnpm run build
 RUN pnpm prune
 
-FROM node:24-slim
+FROM node:22-slim
 ENV NODE_OPTIONS="--max-old-space-size=10240"
 WORKDIR /app
 COPY --from=builder /app/build build/
@@ -22,5 +22,6 @@ EXPOSE 3000
 ENV NODE_ENV=production
 ENV BODY_SIZE_LIMIT=25000000
 
+USER node
 
 CMD [ "node", "server" ]

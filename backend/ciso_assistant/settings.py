@@ -1,7 +1,8 @@
 """
 Django settings for ciso_assistant project.
 
-CORS are not managed by backend, so CORS library is not used
+CORS is managed by django-cors-headers as a fallback to the reverse proxy (Caddy).
+Configure allowed origins via CORS_ALLOWED_ORIGINS environment variable (comma-separated).
 
 if "POSTGRES_NAME" environment variable defined, the database engine is posgresql
 and the other env variables are POSTGRES_USER, POSTGRES_PASSWORD, DB_HOST, DB_PORT
@@ -137,6 +138,24 @@ ALLOWED_HOSTS = os.environ.get(
 ).split(",")
 logger.info("ALLOWED_HOSTS: %s", ALLOWED_HOSTS)
 CSRF_TRUSTED_ORIGINS = [CISO_ASSISTANT_URL]
+
+# CORS — fallback to reverse proxy; configure via CORS_ALLOWED_ORIGINS (comma-separated)
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get("CORS_ALLOWED_ORIGINS", CISO_ASSISTANT_URL).split(",")
+    if origin.strip()
+]
+CORS_ALLOW_CREDENTIALS = True
+
+# Cache — used by django-ratelimit for brute-force protection
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "ciso-assistant-ratelimit",
+    }
+}
+RATELIMIT_CACHE = "default"
+
 LOCAL_STORAGE_DIRECTORY = os.environ.get(
     "LOCAL_STORAGE_DIRECTORY", BASE_DIR / "db/attachments"
 )
@@ -189,6 +208,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.forms",
+    "corsheaders",
     "django_structlog",
     "auditlog",
     "tailwind",
@@ -224,6 +244,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",

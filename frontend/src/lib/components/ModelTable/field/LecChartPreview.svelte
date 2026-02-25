@@ -43,7 +43,7 @@
 		}
 
 		// Ensure the container is clean before initializing
-		chartContainer.innerHTML = '';
+		chartContainer.replaceChildren();
 		chart = echarts.init(chartContainer, null, { renderer: 'svg' });
 
 		// Filter out zero values for logarithmic x-axis (can't display x=0 on log scale)

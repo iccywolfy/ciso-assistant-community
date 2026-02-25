@@ -1,4 +1,4 @@
-FROM python:3.14-slim
+FROM python:3.13-slim
 
 ENV PYTHONUNBUFFERED=1 \
   PYTHONDONTWRITEBYTECODE=1 \
@@ -49,6 +49,10 @@ RUN poetry install --no-root \
 
 #watch out for local files during dev and maintenance of .dockerignore
 COPY . .
+
+RUN useradd -m -u 1000 -s /bin/bash appuser \
+  && chown -R appuser:appuser /code
+USER appuser
 
 EXPOSE 8000
 ENTRYPOINT ["poetry", "run", "bash", "startup.sh"]
